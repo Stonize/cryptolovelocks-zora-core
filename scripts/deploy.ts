@@ -3,6 +3,11 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
 import { MediaFactory } from '../typechain/MediaFactory';
 import { MarketFactory } from '../typechain/MarketFactory';
+import { ethers } from "ethers";
+
+let cryptoLovelockPrice = 3.0e+16
+
+let developer = "0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8"
 
 async function start() {
   const args = require('minimist')(process.argv.slice(2));
@@ -14,8 +19,26 @@ async function start() {
     args.chainId === 1 ? '.prod' : args.chainId === 4 ? '.dev' : '.local'
   }`;
   await require('dotenv').config({ path });
-  const provider = new JsonRpcProvider(process.env.RPC_ENDPOINT);
-  const wallet = new Wallet(`0x${process.env.PRIVATE_KEY}`, provider);
+
+  let wallet
+  let provider
+
+  if (process.env.RPC_ENDPOINT) {
+    provider = new JsonRpcProvider(process.env.RPC_ENDPOINT);
+    wallet = new Wallet(`0x${process.env.PRIVATE_KEY}`, provider);
+  }
+  else {
+    const network = process.env.NETWORK;
+    console.log(process.env.PRIVATE_KEY)
+    wallet = new Wallet(process.env.PRIVATE_KEY) // Wallet.fromMnemonic(process.env.MNEMONIC)
+    const provider = ethers.getDefaultProvider(network, {
+      alchemy: process.env.ALCHEMY_KEY,
+    });
+    wallet = wallet.connect(provider)
+  }
+  // var contractData = contractObject.new.getData(someparam, another, {data: contractBytecode});
+  // var estimate = web3.eth.estimateGas({data: contractData})
+
   const sharedAddressPath = `${process.cwd()}/addresses/${args.chainId}.json`;
   // @ts-ignore
   const addressBook = JSON.parse(await fs.readFileSync(sharedAddressPath));
@@ -39,7 +62,9 @@ async function start() {
 
   console.log('Deploying Media...');
   const mediaDeployTx = await new MediaFactory(wallet).deploy(
-    addressBook.market
+    addressBook.market,
+    cryptoLovelockPrice,
+    developer,
   );
   console.log(`Deploy TX: ${mediaDeployTx.deployTransaction.hash}`);
   await mediaDeployTx.deployed();
