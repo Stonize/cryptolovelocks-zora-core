@@ -5,9 +5,11 @@ import { MediaFactory } from '../typechain/MediaFactory';
 import { MarketFactory } from '../typechain/MarketFactory';
 import { ethers } from "ethers";
 
-let cryptoLovelockPrice = 3.0e+16
+let cryptoLovelockPrice = 0.04e+18
 
 let developer = "0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8"
+
+let STONIZE_PUBLIC_ADDRESS = "0xDE89fb5bd8f420301fAB3930fAaEf185776c4b07"
 
 async function start() {
   const args = require('minimist')(process.argv.slice(2));
