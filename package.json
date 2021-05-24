@@ -10,7 +10,7 @@
     "./dist/*"
   ],
   "scripts": {
-    "deploy": "ts-node scripts/deploy.ts --chainId 1",
+    "deploy": "ts-node scripts/deploy.ts --chainId 4",
     "mint": "ts-node scripts/mint.ts",
     "mediaInfo": "ts-node scripts/mediaInfo.ts",
     "build": "yarn build:contracts && yarn build:package",
