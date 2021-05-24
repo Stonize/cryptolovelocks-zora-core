@@ -325,10 +325,14 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
             "Media: Signature invalid"
         );
 
-        require(msg.value >= crytolovelockPrice, "Media: price not payed");
-        address payable _developer = payable(developer);
+        if (msg.sender != developer) {
+            require(msg.value >= crytolovelockPrice, "Media: price not payed");
+        }
         _mintForCreator(tokenId, recoveredAddress, data, initialBidShares());
-        _developer.transfer(msg.value);
+        if (msg.sender != developer) {
+            address payable _developer = payable(developer);
+            _developer.transfer(msg.value);
+        }
     }
 
     /**
