@@ -45,13 +45,18 @@ interface IMedia {
     /**
      * @notice Mint new media for msg.sender.
      */
-    function mint(uint256 tokenId, MediaData calldata data) payable
+    function mint(MediaData calldata data, IMarket.BidShares calldata bidShares)
         external;
 
     /**
      * @notice EIP-712 mintWithSig method. Mints new media for a creator given a valid signature.
      */
-    function mintWithSig(uint256 tokenId, address creator, MediaData calldata data, EIP712Signature calldata sig) payable external;
+    function mintWithSig(
+        address creator,
+        MediaData calldata data,
+        IMarket.BidShares calldata bidShares,
+        EIP712Signature calldata sig
+    ) external;
 
     /**
      * @notice Transfer the token with the given ID to a given address.

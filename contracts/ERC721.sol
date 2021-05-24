@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 /**
- * NOTE: This file is a clone of the OpenZeppelin ERC721.sol contract. It was forked from @openzeppelin/contracts
+ * NOTE: This file is a clone of the OpenZeppelin ERC721.sol contract. It was forked from https://github.com/OpenZeppelin/openzeppelin-contracts
  * at commit 1ada3b633e5bfd9d4ffe0207d64773a11f5a7c40
  *
  *

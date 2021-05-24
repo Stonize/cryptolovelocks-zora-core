@@ -9,7 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {Decimal} from "./Decimal.sol";
 import {Media} from "./Media.sol";
-import {IMarket} from "./IMarket.sol";
+import {IMarket} from "./interfaces/IMarket.sol";
 
 /**
  * @title A Market for pieces of media
