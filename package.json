@@ -10,7 +10,7 @@
     "./dist/*"
   ],
   "scripts": {
-    "deploy": "ts-node scripts/deploy.ts --chainId 4",
+    "deploy": "ts-node scripts/deploy.ts",
     "mint": "ts-node scripts/mint.ts",
     "mediaInfo": "ts-node scripts/mediaInfo.ts",
     "build": "yarn build:contracts && yarn build:package",
@@ -24,8 +24,7 @@
     "watch": "ts-node scripts/watch.ts"
   },
   "dependencies": {
-    "ethers": "^5.0.19",
-    "truffle-hdwallet-provider": "^1.0.17"
+    "ethers": "^5.0.19"
   },
   "devDependencies": {
     "@ethersproject/keccak256": "^5.0.6",
