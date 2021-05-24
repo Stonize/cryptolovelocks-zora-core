@@ -26,9 +26,45 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     using SafeMath for uint256;
 
     /* *******
+     * Events
+     * *******/
+
+    event CurrentPriceChanged(
+        uint256 _currentPrice        
+    );
+
+    event SetMessage(
+        address indexed _from,
+        uint256 _token,
+        string _msg
+    );
+
+    /* *******
      * Globals
      * *******
      */
+
+    // Developer address
+    address public constant DEVELOPER_ADDRESS = 0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8;
+
+    // Initial cryptolovelock price
+    uint256 public constant INITIAL_PRICE = 0.04e18;
+
+    // First 1089 tokens are reserved for future sales
+    uint16 public constant RESERVED_FOR_FUTURE_SALES = 1089;
+
+    // Total number of token available
+    uint256 public constant TOTAL_SUPPLY = 10380;
+
+    // Current price for Cryptolovelock
+    uint256 public crytolovelockPrice;
+
+    // When true the owner of the token specified by the key
+    // can set the love note: When owner set a love not this flag is
+    // resetted.
+    // We set this flag to true this flag when token is transferred
+    // to a new owner
+    mapping(uint256 => bool) public _canSetMessage;
 
     // Address for the market
     address public marketContract;
@@ -77,8 +113,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      *     => 0x06fdde03 ^ 0x95d89b41 ^ 0xc87b56dd ^ 0x157c3df9 == 0x4e222e66
      */
     bytes4 private constant _INTERFACE_ID_ERC721_METADATA = 0x4e222e66;
-
-    Counters.Counter private _tokenIdTracker;
 
     /* *********
      * Modifiers
@@ -131,10 +165,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * @notice Ensure the token has been created (even if it has been burned)
      */
     modifier onlyTokenCreated(uint256 tokenId) {
-        require(
-            _tokenIdTracker.current() > tokenId,
-            "Media: token with that id does not exist"
-        );
+        require (tokenCreators[tokenId] != address(0x0), "Media: token with that id does not exist");
         _;
     }
 
@@ -153,8 +184,9 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * @notice On deployment, set the market contract address and register the
      * ERC721 metadata interface
      */
-    constructor(address marketContractAddr) public ERC721("Zora", "ZORA") {
+    constructor(address marketContractAddr) public ERC721("Cryptolovelock", "LOVE") {
         marketContract = marketContractAddr;
+        crytolovelockPrice = INITIAL_PRICE;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }
 
@@ -162,6 +194,28 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * View Functions
      * **************
      */
+
+    /**
+     * Constant BidShares for Cryptolovelocs: 5% to creator
+     * the rest to the owner
+     */
+    function initialBidShares() public pure returns (IMarket.BidShares memory) {
+        return IMarket.BidShares({
+            creator: Decimal.D256(5 * Decimal.BASE),
+            prevOwner: Decimal.D256(0),
+            owner: Decimal.D256(95 * Decimal.BASE)
+        });
+    }
+
+    function currentPrice() public view returns (uint256) {
+        return crytolovelockPrice;
+    }
+
+    function setCurrentPrice(uint256 _crytolovelockPrice) public {
+        require(msg.sender == DEVELOPER_ADDRESS, "Media: only developer can set the price");
+        crytolovelockPrice = _crytolovelockPrice;
+        emit CurrentPriceChanged(_crytolovelockPrice);
+    }
 
     /**
      * @notice return the URI for a particular piece of media with the specified tokenId
@@ -202,25 +256,42 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      */
 
     /**
+     * Set your love message
+     */
+    function setLoveMessage(uint256 _tokenId, string memory _msg) public {
+        require(ownerOf(_tokenId) == msg.sender, "Cryptolovelock: Only owner can set love note");        
+        require(_canSetMessage[_tokenId], "Cryptolovelock: You already chosen your love note");
+        _canSetMessage[_tokenId] = false;
+        emit SetMessage(msg.sender, _tokenId, _msg);
+    }
+
+    /**
      * @notice see IMedia
      */
-    function mint(MediaData memory data, IMarket.BidShares memory bidShares)
+    function mint(uint256 tokenId, MediaData memory data)
         public
         override
+        payable
         nonReentrant
     {
-        _mintForCreator(msg.sender, data, bidShares);
+        if (msg.sender != DEVELOPER_ADDRESS) {
+            require(msg.value >= crytolovelockPrice, "Media: price not payed");
+        }
+        _mintForCreator(tokenId, msg.sender, data, initialBidShares());
+        if (msg.sender != DEVELOPER_ADDRESS) {
+            payable(DEVELOPER_ADDRESS).transfer(msg.value);
+        }
     }
 
     /**
      * @notice see IMedia
      */
     function mintWithSig(
+        uint256 tokenId,
         address creator,
         MediaData memory data,
-        IMarket.BidShares memory bidShares,
         EIP712Signature memory sig
-    ) public override nonReentrant {
+    ) public override payable nonReentrant {
         require(
             sig.deadline == 0 || sig.deadline >= block.timestamp,
             "Media: mintWithSig expired"
@@ -238,7 +309,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
                             MINT_WITH_SIG_TYPEHASH,
                             data.contentHash,
                             data.metadataHash,
-                            bidShares.creator.value,
+                            initialBidShares().creator.value,
                             mintWithSigNonces[creator]++,
                             sig.deadline
                         )
@@ -253,7 +324,13 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
             "Media: Signature invalid"
         );
 
-        _mintForCreator(recoveredAddress, data, bidShares);
+        if (msg.sender != DEVELOPER_ADDRESS) {
+            require(msg.value >= crytolovelockPrice, "Media: price not payed");
+        }
+        _mintForCreator(tokenId, msg.sender, data, initialBidShares());
+        if (msg.sender != DEVELOPER_ADDRESS) {
+            payable(DEVELOPER_ADDRESS).transfer(msg.value);
+        }
     }
 
     /**
@@ -465,6 +542,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * metadata has no such requirement.
      */
     function _mintForCreator(
+        uint256 tokenId,
         address creator,
         MediaData memory data,
         IMarket.BidShares memory bidShares
@@ -478,15 +556,22 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
             data.metadataHash != 0,
             "Media: metadata hash must be non-zero"
         );
-
-        uint256 tokenId = _tokenIdTracker.current();
+        require(!_exists(tokenId), "Media: token already exists");
+        require(tokenId >= 0 && tokenId < TOTAL_SUPPLY, "Media: collection has a limited supply");
+        if (creator != DEVELOPER_ADDRESS) {
+            require(tokenId >= RESERVED_FOR_FUTURE_SALES, "Media: this token is left for future sales");
+        }
+        else {
+            require(tokenId < RESERVED_FOR_FUTURE_SALES, "Media: developer can mint only token left for future sales");
+        }
 
         _safeMint(creator, tokenId);
-        _tokenIdTracker.increment();
+
         _setTokenContentHash(tokenId, data.contentHash);
         _setTokenMetadataHash(tokenId, data.metadataHash);
         _setTokenMetadataURI(tokenId, data.metadataURI);
         _setTokenURI(tokenId, data.tokenURI);
+        _canSetMessage[tokenId] = true;
         _creatorTokens[creator].add(tokenId);
         _contentHashes[data.contentHash] = true;
 
@@ -546,7 +631,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         uint256 tokenId
     ) internal override {
         IMarket(marketContract).removeAsk(tokenId);
-
+        _canSetMessage[tokenId] = true;
         super._transfer(from, to, tokenId);
     }
 
@@ -566,7 +651,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
                     keccak256(
                         "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
                     ),
-                    keccak256(bytes("Zora")),
+                    keccak256(bytes("Cryptolovelock")),
                     keccak256(bytes("1")),
                     chainID,
                     address(this)
