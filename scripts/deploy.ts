@@ -5,20 +5,18 @@ import { MediaFactory } from '../typechain/MediaFactory';
 import { MarketFactory } from '../typechain/MarketFactory';
 import { BigNumber, ethers } from "ethers";
 
-// let cryptoLovelockPrice = "40000000000000000" // 0.04e+18
-// let developer = "0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8"
-// let STONIZE_PUBLIC_ADDRESS = "0xDE89fb5bd8f420301fAB3930fAaEf185776c4b07"
-
 async function start() {
   const args = require('minimist')(process.argv.slice(2));
 
   if (!args.chainId) {
     throw new Error('--chainId chain ID is required');
   }
+  /*
   const path = `${process.cwd()}/.env${
     args.chainId === 1 ? '.prod' : args.chainId === 4 ? '.dev' : '.local'
   }`;
   await require('dotenv').config({ path });
+  */
 
   let wallet
   let provider
@@ -36,8 +34,6 @@ async function start() {
     });
     wallet = wallet.connect(provider)
   }
-  // var contractData = contractObject.new.getData(someparam, another, {data: contractBytecode});
-  // var estimate = web3.eth.estimateGas({data: contractData})
 
   const sharedAddressPath = `${process.cwd()}/addresses/${args.chainId}.json`;
   // @ts-ignore
