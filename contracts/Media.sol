@@ -264,10 +264,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * Set your love message
      */
-    function setLoveMessage(uint256 _tokenId, string memory _msg) 
-        public 
-        onlyApprovedOrOwner(msg.sender, _tokenId) 
-    {
+    function setLoveMessage(uint256 _tokenId, string memory _msg) public onlyApprovedOrOwner(msg.sender, _tokenId) {
         require(_canSetMessage[_tokenId], "Cryptolovelock: You already chosen your love note");
         _canSetMessage[_tokenId] = false;
         emit SetMessage(msg.sender, _tokenId, _msg);
