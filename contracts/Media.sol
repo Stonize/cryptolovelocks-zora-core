@@ -99,9 +99,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     // Mapping from contentHash to bool
     mapping(bytes32 => bool) private _contentHashes;
 
-    // Mapping from address to token id to permit nonce
-    mapping(address => mapping(uint256 => uint256)) public permitNonces;
-
     /*
      *     bytes4(keccak256('name()')) == 0x06fdde03
      *     bytes4(keccak256('symbol()')) == 0x95d89b41
@@ -391,8 +388,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice Revoke the approvals for a token. The provided `approve` function is not sufficient
      * for this protocol, as it does not allow an approved address to revoke it's own approval.
-     * In instances where a 3rd party is interacting on a user's behalf via `permit`, they should
-     * revoke their approval once their task is complete as a best practice.
      */
     function revokeApproval(uint256 tokenId) external override nonReentrant {
         require(
