@@ -33,6 +33,10 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         uint256 _currentPrice        
     );
 
+    event DeveloperChanged(
+        address _developer        
+    );
+
     event SetMessage(
         address indexed _from,
         uint256 _token,
@@ -48,7 +52,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     uint256 public constant COLLECTION_LIBRARY_HASH = 0x8545a1a1b0e1d50e5826fd69a865a6e68db14316daac2c5dbccb850fb19f0042;
 
     // Developer address
-    address public constant DEVELOPER_ADDRESS = 0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8;
+    address public constant INITIAL_DEVELOPER_ADDRESS = 0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8;
 
     // Initial cryptolovelock price
     uint256 public constant INITIAL_PRICE = 0.04e18;
@@ -62,11 +66,13 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     // Current price for Cryptolovelock
     uint256 public crytolovelockPrice;
 
+    // Developer of Cryptolovelocks
+    address public developer;
+
     // When true the owner of the token specified by the key
-    // can set the love note: When owner set a love not this flag is
+    // can set the love note: when owner set a love note this flag is
     // resetted.
-    // We set this flag to true this flag when token is transferred
-    // to a new owner
+    // We set this flag to true when token is transferred.
     mapping(uint256 => bool) public _canSetMessage;
 
     // Address for the market
@@ -190,6 +196,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     constructor(address marketContractAddr) public ERC721("Cryptolovelocks", "LOCK") {
         marketContract = marketContractAddr;
         crytolovelockPrice = INITIAL_PRICE;
+        developer = INITIAL_DEVELOPER_ADDRESS;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }
 
@@ -215,9 +222,19 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     }
 
     function setCurrentPrice(uint256 _crytolovelockPrice) public {
-        require(msg.sender == DEVELOPER_ADDRESS, "Media: only developer can set the price");
+        require(msg.sender == developer, "Media: only developer can set the price");
         crytolovelockPrice = _crytolovelockPrice;
         emit CurrentPriceChanged(_crytolovelockPrice);
+    }
+
+    function currentDeveloper() public view returns (address) {
+        return developer;
+    }
+
+    function setDeveloper(address _developer) public {
+        require(msg.sender == developer, "Media: only developer can change the developer");
+        developer = _developer;
+        emit DeveloperChanged(_developer);
     }
 
     /**
@@ -277,12 +294,12 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         payable
         nonReentrant
     {
-        if (msg.sender != DEVELOPER_ADDRESS) {
+        if (msg.sender != developer) {
             require(msg.value >= crytolovelockPrice, "Media: price not payed");
         }
         _mintForCreator(tokenId, msg.sender, data, initialBidShares());
-        if (msg.sender != DEVELOPER_ADDRESS) {
-            payable(DEVELOPER_ADDRESS).transfer(msg.value);
+        if (msg.sender != developer) {
+            payable(developer).transfer(msg.value);
         }
     }
 
@@ -327,12 +344,12 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
             "Media: Signature invalid"
         );
 
-        if (msg.sender != DEVELOPER_ADDRESS) {
+        if (msg.sender != developer) {
             require(msg.value >= crytolovelockPrice, "Media: price not payed");
         }
         _mintForCreator(tokenId, msg.sender, data, initialBidShares());
-        if (msg.sender != DEVELOPER_ADDRESS) {
-            payable(DEVELOPER_ADDRESS).transfer(msg.value);
+        if (msg.sender != developer) {
+            payable(developer).transfer(msg.value);
         }
     }
 
@@ -561,7 +578,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         );
         require(!_exists(tokenId), "Media: token already exists");
         require(tokenId >= 0 && tokenId < TOTAL_SUPPLY, "Media: collection has a limited supply");
-        if (creator != DEVELOPER_ADDRESS) {
+        if (creator != developer) {
             require(tokenId >= RESERVED_FOR_FUTURE_SALES, "Media: this token is left for future sales");
         }
         else {
