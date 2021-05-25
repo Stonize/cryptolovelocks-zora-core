@@ -539,8 +539,8 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         uint256 tokenId
     ) internal override {
         IMarket(marketContract).removeAsk(tokenId);
-        _canSetMessage[tokenId] = true;
         super._transfer(from, to, tokenId);
+        _canSetMessage[tokenId] = true;
     }
 
 }
