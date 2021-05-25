@@ -103,15 +103,8 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     bytes32 public constant PERMIT_TYPEHASH =
         0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
 
-    //keccak256("MintWithSig(bytes32 contentHash,bytes32 metadataHash,uint256 creatorShare,uint256 nonce,uint256 deadline)");
-    bytes32 public constant MINT_WITH_SIG_TYPEHASH =
-        0x2952e482b8e2b192305f87374d7af45dc2eafafe4f50d26a0c02e90f2fdbe14b;
-
     // Mapping from address to token id to permit nonce
     mapping(address => mapping(uint256 => uint256)) public permitNonces;
-
-    // Mapping from address to mint with sig nonce
-    mapping(address => uint256) public mintWithSigNonces;
 
     /*
      *     bytes4(keccak256('name()')) == 0x06fdde03
@@ -278,8 +271,10 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * Set your love message
      */
-    function setLoveMessage(uint256 _tokenId, string memory _msg) public {
-        require(ownerOf(_tokenId) == msg.sender, "Cryptolovelock: Only owner can set love note");        
+    function setLoveMessage(uint256 _tokenId, string memory _msg) 
+        public 
+        onlyApprovedOrOwner(msg.sender, _tokenId) 
+    {
         require(_canSetMessage[_tokenId], "Cryptolovelock: You already chosen your love note");
         _canSetMessage[_tokenId] = false;
         emit SetMessage(msg.sender, _tokenId, _msg);
@@ -294,56 +289,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         payable
         nonReentrant
     {
-        if (msg.sender != developer) {
-            require(msg.value >= crytolovelockPrice, "Media: price not payed");
-        }
-        _mintForCreator(tokenId, msg.sender, data, initialBidShares());
-        if (msg.sender != developer) {
-            payable(developer).transfer(msg.value);
-        }
-    }
-
-    /**
-     * @notice see IMedia
-     */
-    function mintWithSig(
-        uint256 tokenId,
-        address creator,
-        MediaData memory data,
-        EIP712Signature memory sig
-    ) public override payable nonReentrant {
-        require(
-            sig.deadline == 0 || sig.deadline >= block.timestamp,
-            "Media: mintWithSig expired"
-        );
-
-        bytes32 domainSeparator = _calculateDomainSeparator();
-
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    domainSeparator,
-                    keccak256(
-                        abi.encode(
-                            MINT_WITH_SIG_TYPEHASH,
-                            data.contentHash,
-                            data.metadataHash,
-                            initialBidShares().creator.value,
-                            mintWithSigNonces[creator]++,
-                            sig.deadline
-                        )
-                    )
-                )
-            );
-
-        address recoveredAddress = ecrecover(digest, sig.v, sig.r, sig.s);
-
-        require(
-            recoveredAddress != address(0) && creator == recoveredAddress,
-            "Media: Signature invalid"
-        );
-
         if (msg.sender != developer) {
             require(msg.value >= crytolovelockPrice, "Media: price not payed");
         }
@@ -496,51 +441,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         emit TokenMetadataURIUpdated(tokenId, msg.sender, metadataURI);
     }
 
-    /**
-     * @notice See IMedia
-     * @dev This method is loosely based on the permit for ERC-20 tokens in  EIP-2612, but modified
-     * for ERC-721.
-     */
-    function permit(
-        address spender,
-        uint256 tokenId,
-        EIP712Signature memory sig
-    ) public override nonReentrant onlyExistingToken(tokenId) {
-        require(
-            sig.deadline == 0 || sig.deadline >= block.timestamp,
-            "Media: Permit expired"
-        );
-        require(spender != address(0), "Media: spender cannot be 0x0");
-        bytes32 domainSeparator = _calculateDomainSeparator();
-
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    domainSeparator,
-                    keccak256(
-                        abi.encode(
-                            PERMIT_TYPEHASH,
-                            spender,
-                            tokenId,
-                            permitNonces[ownerOf(tokenId)][tokenId]++,
-                            sig.deadline
-                        )
-                    )
-                )
-            );
-
-        address recoveredAddress = ecrecover(digest, sig.v, sig.r, sig.s);
-
-        require(
-            recoveredAddress != address(0) &&
-                ownerOf(tokenId) == recoveredAddress,
-            "Media: Signature invalid"
-        );
-
-        _approve(spender, tokenId);
-    }
-
     /* *****************
      * Private Functions
      * *****************
@@ -655,27 +555,4 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         super._transfer(from, to, tokenId);
     }
 
-    /**
-     * @dev Calculates EIP712 DOMAIN_SEPARATOR based on the current contract and chain ID.
-     */
-    function _calculateDomainSeparator() internal view returns (bytes32) {
-        uint256 chainID;
-        /* solium-disable-next-line */
-        assembly {
-            chainID := chainid()
-        }
-
-        return
-            keccak256(
-                abi.encode(
-                    keccak256(
-                        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                    ),
-                    keccak256(bytes("Cryptolovelock")),
-                    keccak256(bytes("1")),
-                    chainID,
-                    address(this)
-                )
-            );
-    }
 }

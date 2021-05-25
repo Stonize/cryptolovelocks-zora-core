@@ -9,12 +9,6 @@ import {IMarket} from "./IMarket.sol";
  * @title Interface for Zora Protocol's Media
  */
 interface IMedia {
-    struct EIP712Signature {
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
 
     struct MediaData {
         // A valid URI of the content represented by this token
@@ -47,16 +41,6 @@ interface IMedia {
      */
     function mint(uint256 tokenId, MediaData calldata data) payable
         external;
-
-    /**
-     * @notice EIP-712 mintWithSig method. Mints new media for a creator given a valid signature.
-     */
-    function mintWithSig(
-        uint256 tokenId,
-        address creator,
-        MediaData calldata data,
-        EIP712Signature calldata sig
-    ) payable external;
 
     /**
      * @notice Transfer the token with the given ID to a given address.
@@ -105,12 +89,4 @@ interface IMedia {
         string calldata metadataURI
     ) external;
 
-    /**
-     * @notice EIP-712 permit method. Sets an approved spender given a valid signature.
-     */
-    function permit(
-        address spender,
-        uint256 tokenId,
-        EIP712Signature calldata sig
-    ) external;
 }
