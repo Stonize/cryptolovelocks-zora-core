@@ -44,6 +44,9 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * *******
      */
 
+    // Hash of 
+    uint256 public constant COLLECTION_LIBRARY_HASH = 0x8545a1a1b0e1d50e5826fd69a865a6e68db14316daac2c5dbccb850fb19f0042;
+
     // Developer address
     address public constant DEVELOPER_ADDRESS = 0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8;
 
@@ -184,7 +187,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * @notice On deployment, set the market contract address and register the
      * ERC721 metadata interface
      */
-    constructor(address marketContractAddr) public ERC721("Cryptolovelock", "LOVE") {
+    constructor(address marketContractAddr) public ERC721("Cryptolovelocks", "LOCK") {
         marketContract = marketContractAddr;
         crytolovelockPrice = INITIAL_PRICE;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
