@@ -49,10 +49,10 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      */
 
     // Hash of 
-    uint256 public constant COLLECTION_LIBRARY_HASH = 0x8545a1a1b0e1d50e5826fd69a865a6e68db14316daac2c5dbccb850fb19f0042;
+    uint256 public constant COLLECTION_LIBRARY_HASH = 0x152d4f1109f051d3d477f8179dbbc746f65e1abb0d11d796b1943f5ca596c245;
 
     // Developer address
-    address public constant INITIAL_DEVELOPER_ADDRESS = 0xfb1Cad7cF15c11E2827095b4aAD513d9Bc160Df8;
+    address public constant INITIAL_DEVELOPER_ADDRESS = 0xDE89fb5bd8f420301fAB3930fAaEf185776c4b07;
 
     // Initial cryptolovelock price
     uint256 public constant INITIAL_PRICE = 0.04e18;
