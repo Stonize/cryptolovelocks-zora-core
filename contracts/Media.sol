@@ -57,7 +57,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     uint16 public constant RESERVED_FOR_FUTURE_SALES = 1089;
 
     // Total number of token available
-    uint256 public constant TOTAL_SUPPLY = 10380;
+    uint256 public constant TOTAL_SUPPLY = 10890;
 
     // Current price for Cryptolovelock
     uint256 public crytolovelockPrice;
