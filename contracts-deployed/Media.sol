@@ -182,7 +182,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     constructor(address marketContractAddr) public ERC721("Cryptolovelocks", "LOCK") {
         marketContract = marketContractAddr;
         crytolovelockPrice = INITIAL_PRICE;
-        developer = msg.sender;
+        developer = INITIAL_DEVELOPER_ADDRESS;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }
 

@@ -1,0 +1,2 @@
+ts-node scripts/writeLoveNote.ts --gwei 45 --chainId mainnet --tokenId 37 --nonce 125 --message 
+

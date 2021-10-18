@@ -5,19 +5,17 @@ import { MediaFactory } from '../typechain/MediaFactory';
 import { BigNumber, ethers } from "ethers";
 
 async function start() {
-
-  const args = require('minimist')(process.argv.slice(2), {
-    string: ['tokenURI', 'metadataURI', 'contentHash', 'metadataHash'],
-  });
-
-  console.log("Environment", process.env);
+  const args = require('minimist')(process.argv.slice(2));
 
   if (!args.chainId) {
     throw new Error('--chainId chain ID is required');
   }
-  if (!args.tokenId && args.tokenId !== 0) {
-    throw new Error('--tokenId token ID is required');
-  }
+  /*
+  const path = `${process.cwd()}/.env${
+    args.chainId === 1 ? '.prod' : args.chainId === 4 ? '.dev' : '.local'
+  }`;
+  await require('dotenv').config({ path });
+  */
 
   let wallet
   let provider
@@ -40,19 +38,20 @@ async function start() {
   // @ts-ignore
   const addressBook = JSON.parse(await fs.readFileSync(sharedAddressPath));
 
-  if (!addressBook.media) {
-    throw new Error(`Media contract has not yet been deployed`);
+  if (addressBook.media) {
+
+    console.log('Begin Discount campain...');
+    const media = MediaFactory.connect(addressBook.media, wallet);
+    const tx = await media.setCurrentPrice(ethers.utils.parseEther("0.0"), {
+      gasLimit: 1000000,
+      gasPrice: BigNumber.from("45").mul(BigNumber.from("1000000000"))
+    })
+    console.log(`Discount configuration tx: ${tx.hash}`);
+    await tx.wait();
+    console.log(`Discount configured.`);
+  
   }
 
-  const media = MediaFactory.connect(addressBook.media, wallet);
-
-  const tokenURI = await media.tokenURI(args.tokenId);
-  const contentHash = await media.tokenContentHashes(args.tokenId);
-  const metadataURI = await media.tokenMetadataURI(args.tokenId);
-  const metadataHash = await media.tokenMetadataHashes(args.tokenId);
-
-  console.log(`Media Information for token ${args.tokenId}`);
-  console.log({ tokenURI, contentHash, metadataURI, metadataHash });
 }
 
 start().catch((e: Error) => {
